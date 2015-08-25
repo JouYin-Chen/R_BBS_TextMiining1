@@ -1,0 +1,17 @@
+{
+    "contents" : "# Hello, world!\n#\n# This is an example function named 'hello'\n# which prints 'Hello, world!'.\n#\n# You can learn more about package authoring with RStudio at:\n#\n#   http://r-pkgs.had.co.nz/\n#\n# Some useful keyboard shortcuts for package authoring:\n#\n#   Build and Reload Package:  'Ctrl + Shift + B'\n#   Check Package:             'Ctrl + Shift + E'\n#   Test Package:              'Ctrl + Shift + T'\n\nmining <- function() {\n  library(\"XML\")\n  library(\"httr\")\n  library(\"stringr\")\n  library(\"igraph\")\n  library(\"dplyr\")\n\n  data <- list()\n  for( i in 1:10){\n    url <- paste('bbs/Capricornus/index', i, '.html', sep='')\n    html <- content(GET(\"https://www.ptt.cc/\", path = url),as = 'parsed')\n    url.list <- xpathSApply(html, \"//div[@class='title']/a[@href]\", xmlAttrs)\n    data <- rbind(data, url.list[[1]])\n  }\n\n  data = Filter(function(x) x!= \"www.ptt.cc\",data)\n\n  popu <- function(link){\n    html <- content(GET('https://www.ptt.cc', path = data[[link]]), as = 'parsed')\n    poster <- xpathApply(html,\"//div[@class='article-metaline']/span[@class='article-meta-value']\",xmlValue)[[1]]\n\n    #ID AND 暱稱刪掉\n    poster <- str_split_fixed(poster, \"\\\\(\",2)[,1]\n    puller <- xpathApply(html,\"//div[@class='push']/span[@class='f3 hl push-userid']\",xmlValue)\n\n    #排除沒有推文的作者\n    if (length(puller) >0 ){\n      puller <- as.data.frame(matrix(unlist(puller),nrow = length(puller),T))\n      edgelist <- merge(poster,puller,all = TRUE)\n      return (edgelist)\n    }\n  }\n\n  edge = list()\n  for (l in 1:length(data)){\n    edge <- rbind(edge, popu(l))\n  }\n\n  edge2 <- group_by(edge,x,V1)\n  edge2 <- summarise(edge2,weight=n())\n\n  edge2 <- data.frame(from = edge2$V1 , to = edge2$x , weight = edge2$weight)\n\n  g <- graph.data.frame(edge2 , directed = TRUE)\n\n  V(g)$size <- degree(g,mode = (\"in\"))/2\n\n  #畫圖\n  png(filename = \"org_Capricornus.png\",height = 1080 , width = 1080)\n  plot(g , layout = layout.fruchterman.reingold,vertex.label=NA,edge.arrow.size =1)\n  dev.off()\n\n}\n",
+    "created" : 1438596974496.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "1752600159",
+    "id" : "F8C4E313",
+    "lastKnownWriteTime" : 1440492912,
+    "path" : "~/R/TextMining/R/hello.R",
+    "project_path" : "R/hello.R",
+    "properties" : {
+    },
+    "relative_order" : 1,
+    "source_on_save" : false,
+    "type" : "r_source"
+}
